@@ -1,10 +1,9 @@
-# Make Predictions with Naive Bayes On The Iris Dataset
 from csv import reader
 from math import sqrt
 from math import exp
 from math import pi
 
-# Load a CSV file
+# CSV loader
 def load_csv(filename):
     dataset = list()
     with open(filename, 'r') as file:
@@ -15,7 +14,6 @@ def load_csv(filename):
                 continue
             dataset.append(row)
     return dataset
-
 
 # Convert string column to float
 def str_column_to_float(dataset, column):
@@ -95,109 +93,24 @@ def predict(summaries, row):
 			best_label = class_value
 	return best_label
 
-def getPredictions(summaries, testSet):
+# Predicting the classes of each row of the test set
+def get_predictions(summaries, test_set):
     predictions = []
-    for i in range(len(testSet)):
-        result = predict(summaries, testSet[i])
+    for i in range(len(test_set)):
+        result = predict(summaries, test_set[i])
         #print(result)
         predictions.append(result)
     return predictions
 
-def convert_predictions(predictions, testtest):
+# Converting volume_index_dictionary to key volume values
+def convert_predictions(predictions, volume_index_dictionary):
     converted_predictions = []
     for i in range(len(predictions)):
-        converted_prediction = list(testtest.keys())[list(testtest.values()).index(predictions[i])]
+        converted_prediction = list(volume_index_dictionary.keys())[list(volume_index_dictionary.values()).index(predictions[i])]
         converted_predictions.append(converted_prediction)
     return converted_predictions
 
-def getAccuracy(testSet, predictions):
-    correct = 0
-    for i in range(len(testSet)):
-        #print("TEST SET ", testSet[i][-1])
-        #print("PREDICTIONS ", list(testtest.keys())[list(testtest.values()).index(predictions[i])])
-        if testSet[i][-1] == predictions[i]:
-        #if testSet[i][-1] == list(testtest.keys())[list(testtest.values()).index(predictions[i])]:
-            correct += 1
-    return (correct/float(len(testSet))) * 100.0
-"""
-def get_confusion_matrix(testSet, predictions):
-    #TP = true positive, FP = false positive
-    #TN = true negative, FN = false negative
-    TP, FP, TN, FN = 0,0,0,0 
-    for i in range(len(testSet)):
-        if testSet[i][-1] == 1:
-            if testSet[i][-1] == predictions[i]:
-                TP +=1
-            else: 
-                FN +=1
-        else:
-            if testSet[i][-1] == predictions[i]:
-                TN +=1
-            else: 
-                FP +=1
-    return[TP, FP, TN, FN]"""
-
-def get_confusion_matrix(test_set, predictions):
-    confusion_matrix = {
-        "T1": 0,
-        "F1": 0,
-        "T2": 0,
-        "F2": 0,
-        "T3": 0,
-        "F3": 0,
-        "T4": 0,
-        "F4": 0,
-        "T5": 0,
-        "F5": 0,
-        "T6": 0,
-        "F6": 0
-    }
-
-    false_volume_dictionary = {
-        1: "F1",
-        2: "F2",
-        3: "F3",
-        4: "F4",
-        5: "F5",
-        6: "F6"
-    }
-
-    print(confusion_matrix[false_volume_dictionary[2]])
-    for i in range(len(test_set)):
-        volume_check = int(test_set[i][-1])
-        prediction_check = int(predictions[i])
-        if volume_check == 1:
-            if volume_check == prediction_check:
-                confusion_matrix["T1"] += 1
-            else:
-                confusion_matrix[false_volume_dictionary[prediction_check]] += 1
-        elif volume_check == 2:
-            if volume_check == prediction_check:
-                confusion_matrix["T2"] += 1
-            else:
-                confusion_matrix[false_volume_dictionary[prediction_check]] += 1
-        elif volume_check == 3:
-            if volume_check == prediction_check:
-                confusion_matrix["T3"] += 1
-            else:
-                confusion_matrix[false_volume_dictionary[prediction_check]] += 1
-        elif volume_check == 4:
-            if volume_check == prediction_check:
-                confusion_matrix["T4"] += 1
-            else:
-                confusion_matrix[false_volume_dictionary[prediction_check]] += 1
-        elif volume_check == 5:
-            if volume_check == prediction_check:
-                confusion_matrix["T5"] += 1
-            else:
-                confusion_matrix[false_volume_dictionary[prediction_check]] += 1
-        elif volume_check == 6:
-            if volume_check == prediction_check:
-                confusion_matrix["T6"] += 1
-            else:
-                confusion_matrix[false_volume_dictionary[prediction_check]] += 1
-    return confusion_matrix
-
+# Getting confusin matrix per volume entry (1 - 6)
 def get_confusion_matrices(test_set, predictions):
     confusion_matrices = {
         1: {
@@ -238,28 +151,31 @@ def get_confusion_matrices(test_set, predictions):
         }
     }
 
+    # For each volume
     for j in range(6):
-        volume = j + 1
+        current_volume = j + 1
         for i in range(len(test_set)):
             volume_check = int(test_set[i][-1])
             prediction_check = int(predictions[i])
-            # if the test set's volume is 1
-            if  volume_check == volume:
+            # if the test set's row prediction volume is equal to the current_volume
+            if  volume_check == current_volume:
                 # if the prediction is correct
                 if volume_check == prediction_check:
-                    # increment volume 1's true positive
-                    confusion_matrices[volume]["TP"] += 1
+                    # increment current_volume's true positive in confusion matrix
+                    confusion_matrices[current_volume]["TP"] += 1
                 # prediction is incorrect, should have predicted 1
                 else:
                     # increment volume 1's false negative
-                    confusion_matrices[volume]["FN"] += 1
-            # volume is something other than 1
+                    confusion_matrices[current_volume]["FN"] += 1
+            # volume is something other than the current_volume
             else:
-                # if prediction is correct and not 1, 
+                # if prediction is correct and not the current_volume
                 if  volume_check == prediction_check:
-                    confusion_matrices[volume]["TN"] += 1
+                    # increment current_volume's true negative in confusion matrix
+                    confusion_matrices[current_volume]["TN"] += 1
+                # prediction was not equal to 
                 else: 
-                    confusion_matrices[volume]["FP"] += 1
+                    confusion_matrices[current_volume]["FP"] += 1
     
     return confusion_matrices
 
@@ -347,39 +263,36 @@ def get_precisions(confusion_matrices):
     
     return precisions
 
-def print_results(accuracies, error_rates, sensitivities, specificities, precisions):
+def print_metrics(accuracies, error_rates, sensitivities, specificities, precisions):
     print("{:<8} {:<10} {:<12} {:<12} {:<12} {:<12}".format('Volume', 'Accuracy', 'Error Rate', 'Sensitivity', 'Specificity', 'Percision'))
     for i in range(6):
         volume = i + 1
         print("{:<8} {:<10} {:<12} {:<12} {:<12} {:<12}".format(volume, round(accuracies[volume], 3), round(error_rates[volume], 3), round(sensitivities[volume], 3), round(specificities[volume], 3), round(precisions[volume], 3)))
 
 
-# Make a prediction with Naive Bayes on Iris Dataset
-filename = 'Assignment_2--Training_set_for_Bayes.csv'
-test_file = 'Assignment_2--Test_set_for_Bayes.csv'
-dataset = load_csv(filename)
-testset = load_csv(test_file)
-for i in range(len(dataset[0])-1):
-	str_column_to_float(dataset, i)
+def main():
+    # Make a prediction with Naive Bayes
+    filename = 'Assignment_2--Training_set_for_Bayes.csv'
+    test_file = 'Assignment_2--Test_set_for_Bayes.csv'
+    train_set = load_csv(filename)
+    test_set = load_csv(test_file)
+    for i in range(len(train_set[0])-1):
+        str_column_to_float(train_set, i)
 
-for i in range(len(testset[0])-1):
-	str_column_to_float(testset, i)
-# convert class column to integers
-test = str_column_to_int(dataset, len(dataset[0])-1)
-# fit model
-model = summarize_by_class(dataset)
-predictions = getPredictions(model, testset)
-converted_predictions = convert_predictions(predictions, test)
-accuracy = getAccuracy(testset, converted_predictions)
-#confusion_matrix = get_confusion_matrix(testset, converted_predictions)
-#accuracy = get_accuracy(testset, confusion_matrix)
-#print(confusion_matrix)
-#print(accuracy)
-confusion_matrices = get_confusion_matrices(testset, converted_predictions)
-accuracies = get_accuracies(testset, confusion_matrices)
-error_rates = get_error_rates(testset, confusion_matrices)
-sensitivities = get_sensitivities(confusion_matrices)
-specificities = get_specificities(confusion_matrices)
-precisions = get_precisions(confusion_matrices)
-print_results(accuracies, error_rates, sensitivities, specificities, precisions)
-
+    for i in range(len(test_set[0])-1):
+        str_column_to_float(test_set, i)
+    # convert class column to integers
+    volume_index_dictionary = str_column_to_int(train_set, len(train_set[0])-1)
+    # fit model
+    model = summarize_by_class(train_set)
+    predictions = get_predictions(model, test_set)
+    converted_predictions = convert_predictions(predictions, volume_index_dictionary)
+    confusion_matrices = get_confusion_matrices(test_set, converted_predictions)
+    # calculating metrics
+    accuracies = get_accuracies(test_set, confusion_matrices)
+    error_rates = get_error_rates(test_set, confusion_matrices)
+    sensitivities = get_sensitivities(confusion_matrices)
+    specificities = get_specificities(confusion_matrices)
+    precisions = get_precisions(confusion_matrices)
+    # displaying metrics
+    print_metrics(accuracies, error_rates, sensitivities, specificities, precisions)
